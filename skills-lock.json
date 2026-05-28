@@ -79,6 +79,12 @@
       "skillPath": "skills/content-strategy/SKILL.md",
       "computedHash": "13824c129ab70874c57d766c2d844f8dac7a0b366845f108a73527c9d094c4f6"
     },
+    "context-engineering-collection": {
+      "source": "muratcankoylan/Agent-Skills-for-Context-Engineering",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "df67ded00f18bf31f65a782dbcdcbeaedc42b5aa65137784bb163abbad7c5952"
+    },
     "copy-editing": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
