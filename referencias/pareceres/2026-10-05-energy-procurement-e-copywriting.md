@@ -28,7 +28,7 @@ A divergência de licença não bloqueia, mas é sinal de metadados pouco cuidad
 Não é teste de léxico, é de aplicabilidade: o papel definido é «gestor sénior de compras com $15–80 M/ano em 10–50 instalações». Um condomínio ou PME portuguesa está várias ordens de grandeza abaixo. `[A VALIDAR]` com fonte oficial (ERSE) o regime de mercado e de tarifas aplicável em Portugal: **não** faço afirmações sobre ele neste parecer.
 
 ## O que se aproveita
-Aproveita-se: estrutura de RFP a comercializadores (dados de consumo a pedir, critérios para comparar), compra em camadas (tranches), fixo vs. indexado vs. misto como dilema, fator de carga, matriz de escalonamento. Deita-se fora: PJM/ERCOT/LMP, PPAs virtuais, ratchets, números em dólares, papel de gestor corporativo. Guardado em: não arquivado, aguarda aprovação.
+Aproveita-se: estrutura de RFP a comercializadores (dados de consumo a pedir, critérios para comparar), compra em camadas (tranches), fixo vs. indexado vs. misto como dilema, fator de carga, matriz de escalonamento. Deita-se fora: PJM/ERCOT/LMP, PPAs virtuais, ratchets, números em dólares, papel de gestor corporativo. Guardado em: referencias/materia-prima/.
 
 ## Estado
 não instalado · Registado em: referencias/componentes-avaliados.md, linha de 2026-10-05
@@ -63,7 +63,7 @@ não instalado · Registado em: referencias/componentes-avaliados.md, linha de 2
 Mecanismo: a verificação da skill manda procurar `"not "`, `"isn't"`, `"no "`, `"without"`. Em português seriam «não é/não só», «sem». Das 5 linhas de teste, 2 foram assinaladas, nenhuma pela razão certa. O erro não aparece: o texto passa como «verificado».
 
 ## O que se aproveita
-Aproveita-se: clareza sobre cleverness, especificidade sobre vago, o «swap test» (a frase serviria no site do concorrente?), a estrutura da hero como transformação, a regra de sinalizar `[NEED: …]` em vez de inventar prova. Deita-se fora: listas de CTAs e chavões em inglês, as estatísticas sem fonte, a verificação mecânica em inglês. Valor real: servir de modelo para uma **lista de «tiques» em PT-PT** a integrar na tsc-conteudo ou na humanizer. Guardado em: não arquivado, aguarda aprovação.
+Aproveita-se: clareza sobre cleverness, especificidade sobre vago, o «swap test» (a frase serviria no site do concorrente?), a estrutura da hero como transformação, a regra de sinalizar `[NEED: …]` em vez de inventar prova. Deita-se fora: listas de CTAs e chavões em inglês, as estatísticas sem fonte, a verificação mecânica em inglês. Valor real: servir de modelo para uma **lista de «tiques» em PT-PT** a integrar na tsc-conteudo ou na humanizer. Guardado em: referencias/materia-prima/.
 
 ## Estado
 não instalado · Registado em: referencias/componentes-avaliados.md, linha de 2026-10-05
