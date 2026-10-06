@@ -1,6 +1,8 @@
 # Skills atualizadas — lista de tiques PT-PT integrada (2026-10-06)
 
-Estado: **por distribuir.** Estes exemplares foram preparados no repositório; as cópias da conta (`tsc-conteudo`, `humanizer`) **não** foram alteradas. A cópia da conta carrega-se por zip, pelo utilizador.
+Estado (2026-10-06): **carregado na conta e verificado no Claude Code (sessão cloud).** Cópia sincronizada da conta igual à versão preparada (tsc-conteudo: ficheiro a ficheiro; humanizer: corpo idêntico, só o frontmatter YAML foi reserializado pela plataforma, com o mesmo conteúdo). Chamada real a cada skill pelo nome: carregam v2.2 e 2.7.0-pt1 com as secções novas; `references/` e `scripts/` encontrados e executados. **Por verificar:** app Claude (chat) e Claude Code no computador — abrir uma conversa nova em cada e pedir para correr a skill; deve aparecer o passo 4b (tsc-conteudo) e a secção PT-PT (humanizer).
+
+Este ficheiro é só uma nota para ti: **não faz parte das skills, não se carrega em lado nenhum** (os zips não o incluem). Podes apagá-lo.
 
 | Skill | Versão | O que muda | Zip |
 |---|---|---|---|
