@@ -7,6 +7,7 @@ Uso:  python3 verificar_tiques.py FICHEIRO [--formal]
 Procura os padrões de LISTA.md por expressão regular. Não prova que um texto
 foi escrito por IA nem que está bom: aponta o sítio onde um padrão aparece.
 BAN = tique mesmo uma só vez. CAP = tolerável uma vez, tique se repetido.
+--assinatura "texto": permite uma vez uma frase de marca que seja contraste P1.
 --estilo-casa: ignora «!» e emoji (T2), quando são escolha de estilo tua.
 --formal: desliga os padrões que são fórmula legítima em cartas e peças
 jurídicas («importa referir», «em suma») e o aviso de frases longas.
@@ -83,9 +84,11 @@ def split_paragraphs(t):
     return [p for p in re.split(r"\n\s*\n", t) if p.strip()]
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--") or a == "-"]
+    skip = {sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--assinatura" and i + 1 < len(sys.argv)}
+    args = [a for a in sys.argv[1:] if (not a.startswith("--") or a == "-") and a not in skip]
     formal = "--formal" in sys.argv
     casa = "--estilo-casa" in sys.argv
+    assinaturas = [sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--assinatura" and i + 1 < len(sys.argv)]
     if not args:
         print(__doc__); sys.exit(2)
     text = sys.stdin.read() if args[0] == "-" else open(args[0], encoding="utf-8").read()
@@ -106,6 +109,13 @@ def main():
         for s in re.split(r"(?<=[.!?])\s+", line):
             if len(s.split()) > 20 and s.count(",") > 2:
                 hits.append((ln, "S1", "CAP", s[:60] + "…", "frase longa com mais de 2 vírgulas: verificar acumulação"))
+    # assinatura de marca: a 1.ª ocorrência é permitida (dispositivo escolhido de propósito)
+    for s in assinaturas:
+        k = text.lower().find(s.lower())
+        if k >= 0:
+            ln0 = text.count("\n", 0, k) + 1
+            hits = [h for h in hits if not (h[1] == "P1" and h[0] == ln0)]
+            print(f"(assinatura de marca permitida uma vez, linha {ln0}: «{s[:50]}»)")
     hits.sort()
     for ln, rid, lvl, frag, msg in hits:
         print(f"L{ln:<4} {lvl:<3} {rid:<4} «{frag}» — {msg}")
