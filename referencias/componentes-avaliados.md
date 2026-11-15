@@ -4,7 +4,7 @@ Uma linha por avaliação, qualquer que seja o veredicto (fase 6 da skill `avali
 
 | data | componente | tipo | versão/commit | veredicto | razão (uma frase) | onde está | estado de verificação |
 |---|---|---|---|---|---|---|---|
-| 2026-11-15 | NVIDIA SkillSpector (`NVIDIA/skillspector`) | CLI (Python ≥3.12) | v2.12.0 / c816150 | instalar (condicionado) | Scanner estático eficaz em inglês, mas não deteta injeção de prompt em PT-PT: usar só como filtro de entrada, nunca como certificado. | venv isolado numa pasta temporária de sessão cloud (efémero); não instalado na máquina do utilizador nem na conta | testado em cópia isolada, só `--no-llm`; instalação definitiva por aprovar; estrelas/nº de regras `[NÃO RECONCILIADO]` (gh sem autenticação) |
+| 2026-11-15 | NVIDIA SkillSpector (`NVIDIA/skillspector`) | CLI (Python ≥3.12) | v2.12.0 / c816150 | instalar (condicionado) | Passagem estática não deteta injeção de prompt em PT-PT; com a passagem LLM (`claude_cli`) deteta-a: usar sempre com LLM para skills em português. | venv isolado numa pasta temporária de sessão cloud (efémero); não instalado na máquina do utilizador nem na conta | testado em cópia isolada, com e sem LLM; instalação definitiva por aprovar; estrelas/nº de regras `[NÃO RECONCILIADO]` (gh sem autenticação) |
 
 ## Notas por componente
 
@@ -20,6 +20,15 @@ Testes estáticos (`--no-llm`), cobertura 100 % em todos os casos:
 | `skill-inspector` (NVIDIA) | EN | 0 SAFE |
 | Skill benigna `modelo-convocatoria` | PT-PT | 0 SAFE |
 
-Diferencial: o que depende de comandos e caminhos (`curl`, `~/.ssh`, `| bash`) apanha-se em qualquer língua; o que depende de texto imperativo dirigido ao agente em PT-PT passa. A segunda passagem com LLM (desligada) não foi testada e pode fechar a lacuna: **por verificar**.
+Diferencial: o que depende de comandos e caminhos (`curl`, `~/.ssh`, `| bash`) apanha-se em qualquer língua; o que depende de texto imperativo dirigido ao agente em PT-PT passa. 
+Passagem com LLM (2026-11-15, `SKILLSPECTOR_PROVIDER=claude_cli`, cobertura 100 %, analisadores semânticos corridos):
 
-Por fazer: reconciliar estrelas/regras/último commit contra a fonte; testar `--llm` com um fornecedor; decisão de instalar (máquina local) com aprovação explícita.
+| Alvo | Língua | Resultado |
+|---|---|---|
+| Skill maliciosa só em linguagem natural | PT-PT | **100 CRITICAL, `DO_NOT_INSTALL`**, 5 achados (Data Exfiltration, Prompt Injection, Excessive Agency, Output Handling) — falso negativo estático corrigido |
+| Skill maliciosa com comandos | PT-PT | 100 CRITICAL, 11 achados (acrescenta Prompt Injection e Trigger Abuse) |
+| Skill benigna | PT-PT | 0 SAFE (sem falso positivo) |
+
+Conclusão: a lacuna fecha com a passagem LLM; fica por medir a taxa de falsos positivos/negativos numa amostra maior (só 3 casos) e o custo por scan.
+
+Por fazer: reconciliar estrelas/regras/último commit contra a fonte; amostra maior com LLM; decisão de instalar (máquina local) com aprovação explícita.
