@@ -47,8 +47,11 @@ Porque é assim:
 - **Divisões como `##`**: a hierarquia completa (Livro > Título > Capítulo > Secção) fica
   achatada num só nível de propósito: níveis de título fundos variam de diploma para
   diploma e confundem a divisão em pedaços.
-- **Marcadores `<!-- cabecalho -->` e `<!-- fecho -->`**: o `verificar.py` usa-os para
-  separar o que foi acrescentado do texto legal. Não os apagues.
+- **Marcadores `<!-- cabecalho -->`, `<!-- fecho -->` e `<!-- quadro … -->`**: o `verificar.py`
+  usa-os para separar o que foi acrescentado do texto legal. Não os apagues.
+- **Quadros**: os «(ver documento original)» do DRE ficam em parágrafo próprio. Um quadro
+  reproduzido entra logo a seguir, entre `<!-- quadro … -->` e `<!-- /quadro -->`, com a nota
+  de origem (PDF, página, versão). Ver `references/tabelas.md`.
 
 ## Nomes dos ficheiros
 

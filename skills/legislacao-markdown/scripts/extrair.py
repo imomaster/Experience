@@ -49,8 +49,8 @@ def limpar_linha(linha: str) -> str:
 
 
 # --------------------------------------------------------------------- PDF
-def linhas_da_pagina(page) -> tuple[list[str], bool]:
-    blocos = [b for b in page.get_text("blocks", sort=False) if b[6] == 0 and b[4].strip()]
+def linhas_da_pagina(page, clip=None) -> tuple[list[str], bool]:
+    blocos = [b for b in page.get_text("blocks", sort=False, clip=clip) if b[6] == 0 and b[4].strip()]
     if not blocos:
         return [], False
     x0 = min(b[0] for b in blocos)
@@ -199,7 +199,13 @@ def retirar_cabecalhos(paginas: list[list[str]], rel: dict, margem: int = 3) -> 
 
 
 # ----------------------------------------------------------- hifenização
-def juntar_hifens(linhas: list[str], rel: dict) -> list[str]:
+def fazer_lexico(linhas: list[str]) -> collections.Counter:
+    """Conta as formas (com e sem hífen) que aparecem no texto, para decidir junções."""
+    corpo = " ".join(linhas).lower()
+    return collections.Counter(re.findall(r"[\wÀ-ÿ]+(?:-[\wÀ-ÿ]+)*", corpo))
+
+
+def juntar_hifens(linhas: list[str], rel: dict, lexico=None) -> list[str]:
     """Junta palavras partidas no fim da linha.
 
     Decide se o hífen é de translineação (retira-se: «conser-|vação») ou faz
@@ -208,8 +214,8 @@ def juntar_hifens(linhas: list[str], rel: dict) -> list[str]:
     sítio do texto, segue-se essa. Sem pistas, fica a regra por omissão e a
     junção é marcada como «ambígua» no relatório, para conferir.
     """
-    corpo = " ".join(linhas).lower()
-    lexico = collections.Counter(re.findall(r"[\wÀ-ÿ]+(?:-[\wÀ-ÿ]+)*", corpo))
+    if lexico is None:
+        lexico = fazer_lexico(linhas)
 
     saida: list[str] = []
     juncoes, ambiguas = [], []

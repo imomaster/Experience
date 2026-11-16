@@ -7,7 +7,9 @@ propósito: metadados, cabeçalho de aviso, título do ficheiro, sigla [XX] nos
 títulos dos artigos e a marcação Markdown. Num diploma inteiro faz também uma
 contagem global de todas as palavras.
 
-Não deteta alterações de pontuação (só palavras e números).
+Quando as palavras coincidem, confere também a pontuação do corpo de cada
+artigo (sinal a sinal). Os quadros inseridos pelo quadros.py são ignorados
+aqui: quem os verifica é o tabelas.py.
 
 Uso:
     python3 verificar.py texto.txt saida.md [--relatorio verif.json] [--marcar]
@@ -87,6 +89,8 @@ def limpar_md(md: str) -> tuple[list[str], str]:
     """Devolve (linhas do corpo sem marcação, título)."""
     md = re.sub(r"\A---\n.*?\n---\n", "", md, flags=re.S)
     md = re.sub(r"<!-- cabecalho -->.*?<!-- /cabecalho -->", "", md, flags=re.S)
+    # quadros inseridos pelo quadros.py: são verificados à parte, pelo tabelas.py
+    md = re.sub(r"<!-- quadro .*?<!-- /quadro -->", "", md, flags=re.S)
     saida, titulo_vista = [], False
     for l in md.splitlines():
         if not titulo_vista and l.startswith("# "):
@@ -117,6 +121,24 @@ def blocos_md(linhas: list[str]) -> list[tuple[tuple, list[str]]]:
         elif atual is not None:
             atual[1].append(l)
     return blocos
+
+
+def fichas(texto: str) -> list[str]:
+    """Palavras e sinais de pontuação, um a um."""
+    return re.findall(r"\w+|[^\w\s]", texto.replace("\\", ""))
+
+
+def corpo_origem(ls: list[str], n_titulo: int) -> list[str] | None:
+    """Linhas do artigo sem o cabeçalho (número + epígrafe). O cabeçalho ocupa
+    linhas inteiras: avança até ter consumido as palavras do título do .md."""
+    n = 0
+    for i, l in enumerate(ls):
+        n += len(palavras(l))
+        if n == n_titulo:
+            return ls[i + 1:]
+        if n > n_titulo:
+            return None
+    return None
 
 
 def resumo_diff(a: list[str], b: list[str], maximo: int = 8) -> list[str]:
@@ -160,21 +182,35 @@ def main() -> None:
     bo = blocos_origem(origem)
     bm = blocos_md(md_linhas)
     por_chave = collections.defaultdict(list)
+    linhas_por_chave = collections.defaultdict(list)
     for k, ls in bo:
         por_chave[k].append(palavras(" ".join(ls)))
+        linhas_por_chave[k].append(ls)
 
     problemas, ok = [], 0
+    sem_pontuacao: list[str] = []
     for k, ls in bm:
         pm = palavras(" ".join(ls))
         cands = por_chave.get(k)
         if not cands:
             problemas.append({"artigo": fmt(k), "diferencas": ["Artigo não existe no texto de origem"]})
             continue
-        melhor = max(cands, key=lambda c: difflib.SequenceMatcher(None, c, pm, autojunk=False).ratio())
-        if melhor == pm:
+        idx = max(range(len(cands)), key=lambda i: difflib.SequenceMatcher(None, cands[i], pm, autojunk=False).ratio())
+        melhor = cands[idx]
+        if melhor != pm:
+            problemas.append({"artigo": fmt(k), "diferencas": resumo_diff(melhor, pm)})
+            continue
+        # as palavras coincidem: conferir também a pontuação do corpo do artigo
+        corpo = corpo_origem(linhas_por_chave[k][idx], len(palavras(ls[0])))
+        if corpo is None:
+            sem_pontuacao.append(fmt(k))
+            ok += 1
+            continue
+        fo, fm = fichas(" ".join(corpo)), fichas(" ".join(ls[1:]))
+        if fo == fm:
             ok += 1
         else:
-            problemas.append({"artigo": fmt(k), "diferencas": resumo_diff(melhor, pm)})
+            problemas.append({"artigo": fmt(k), "diferencas": ["(pontuação) " + d for d in resumo_diff(fo, fm)]})
 
     global_dif = []
     if not excerto:
@@ -194,6 +230,7 @@ def main() -> None:
     passou = not problemas and not global_dif
     rel = {"modo": "excerto" if excerto else "integral", "artigos_verificados": len(bm),
            "artigos_iguais": ok, "artigos_com_diferencas": problemas, "diferencas_globais": global_dif,
+           "pontuacao_nao_verificada": sem_pontuacao,
            "resultado": "OK" if passou else "DIFERENÇAS"}
     rel_path = a.relatorio or a.markdown.with_suffix(".verificacao.json")
     rel_path.write_text(json.dumps(rel, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -205,10 +242,13 @@ def main() -> None:
             print(f"    - {d}")
     for g in global_dif:
         print("  " + g)
+    if sem_pontuacao:
+        print(f"  Pontuação não conferida em {len(sem_pontuacao)} artigo(s) (cabeçalho com formato invulgar): "
+              + ", ".join(sem_pontuacao[:10]))
     print("RESULTADO:", rel["resultado"])
 
     if a.marcar:
-        texto = (f"automática OK: {ok}/{len(bm)} artigos palavra a palavra" if passou
+        texto = (f"automática OK: {ok}/{len(bm)} artigos, palavras e pontuação" if passou
                  else f"automática com diferenças ({len(problemas)} artigos) — rever")
         novo = re.sub(r'^verificacao:.*$', f'verificacao: "{texto}"', md_txt, count=1, flags=re.M)
         a.markdown.write_text(novo, encoding="utf-8")

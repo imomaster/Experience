@@ -39,6 +39,10 @@ RE_ANEXO = re.compile(r"^(ANEXO|Anexo)(\s+[IVXLC\d]+(-[A-Z])?)?\s*$")
 RE_INICIO = re.compile(
     r"^(\d+\s*[-–—]\s|\d+\.\s+[A-ZÀ-Ý«(]|\d+\.\s*$|[a-z]{1,2}\)\s|[ivxlc]+\)\s|«)"
 )
+# marcas do DRE para quadros e figuras que só existem no PDF, e as respetivas legendas:
+# ficam sempre em parágrafo próprio, para o quadros.py as encontrar
+RE_VDO = re.compile(r"(?:[a-z]{1,3}\)\s*)?\(ver documento original\)[;.,]?", re.I)
+RE_LEGENDA = re.compile(r"(QUADRO|TABELA|MAPA|MODELO|FIGURA)\s+[IVXLC\d]+(-[A-Z])?\.?$")
 RE_FECHO = re.compile(
     r"^(Aprovad[oa]s? em|Visto e aprovado|Promulgad[oa] em|Referendad[oa] em|Publique-se|"
     r"O Presidente da República|O Primeiro-Ministro|A Primeira-Ministra|O Presidente da Assembleia|"
@@ -160,7 +164,8 @@ def analisar(linhas: list[str]) -> tuple[list[dict], int]:
             unidades.append(u)
         anterior = u["pars"][-1][-1] if u["pars"] else None
         curta = anterior is not None and len(anterior) < 0.6 * mediana and not anterior.endswith("-")
-        if (not u["pars"] or RE_INICIO.match(l)
+        if (not u["pars"] or RE_INICIO.match(l) or RE_VDO.fullmatch(l) or RE_LEGENDA.match(l)
+                or (anterior is not None and (RE_VDO.fullmatch(anterior) or RE_LEGENDA.match(anterior)))
                 or (anterior is not None and (re.search(r"[.:;»]$", anterior) or curta) and comeca_maiuscula(l))):
             novo_par(u, l)
         else:

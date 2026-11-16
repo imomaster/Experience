@@ -1,19 +1,21 @@
 ---
 name: legislacao-markdown
-description: Converte diplomas legislativos portugueses (leis, decretos-lei, códigos, regulamentos, portarias), inteiros ou em excerto, em ficheiros Markdown fiéis ao texto consolidado em vigor, prontos para bases de conhecimento de Projetos do Claude, do ChatGPT e para materiais da comunidade TSC. Obtém o texto pela hierarquia DRE → PGDL → Alpaca, extrai-o mecanicamente de PDF/HTML, estrutura-o por artigos e verifica palavra a palavra que nada foi omitido ou alterado. Usar SEMPRE que o pedido envolva converter, passar, transcrever ou preparar legislação para Markdown/.md, montar ou atualizar uma base de conhecimento com leis, extrair artigos de um PDF do Diário da República ou da PGDL, ou preparar um código/regime jurídico (por exemplo, propriedade horizontal, Código Civil, regime do condomínio) para carregar num projeto de IA — mesmo que o utilizador não fale em «skill» nem em «Markdown» e diga só «põe-me esta lei em texto» ou «prepara-me o regime X para o projeto».
+description: Converte diplomas legislativos portugueses (leis, decretos-lei, códigos, regulamentos, portarias), inteiros ou em excerto, em Markdown fiel ao texto consolidado em vigor, e reproduz os quadros e tabelas que o DRE só mostra como «(ver documento original)», extraindo-os do PDF oficial com verificação e prova visual. Serve bases de conhecimento de Projetos do Claude, do ChatGPT e materiais TSC. Segue a hierarquia DRE → PGDL → Alpaca, extrai por programa e verifica palavra a palavra que nada foi omitido ou alterado. Usar SEMPRE que o pedido envolva converter ou preparar legislação para Markdown/.md, montar ou atualizar uma base de conhecimento ou Blocos com leis, extrair artigos, quadros, tabelas ou anexos de um PDF do Diário da República ou da PGDL, resolver os «(ver documento original)», saber a versão em vigor de um quadro, ou preparar um regime jurídico para um projeto de IA — mesmo que o utilizador diga só «põe-me esta lei em texto» ou «falta a tabela deste artigo».
 ---
 
 # Legislação → Markdown fiel
 
 Estes ficheiros vão servir de fonte a assistentes de IA e a membros da comunidade.
-Um artigo com uma alínea a menos ou um prazo trocado é pior do que não ter ficheiro,
-porque passa a ser citado com confiança. Por isso a regra central desta skill é:
+Um artigo com uma alínea a menos, um prazo trocado ou um quadro com as colunas
+desencontradas é pior do que não ter ficheiro, porque passa a ser citado com confiança.
+Por isso a regra central desta skill é:
 
 **O texto legal nunca é escrito por ti.** É extraído por programa, estruturado por
 programa e verificado por programa. O teu trabalho é escolher a fonte certa, correr
 os passos, ler os relatórios, decidir os casos ambíguos e preencher os metadados.
-Se te apetecer «limpar» ou «corrigir» o texto à mão no .md, não o faças: corrige o
-passo que falhou e volta a gerar.
+Se te apetecer «limpar» ou «corrigir» o texto ou um quadro à mão no .md, não o faças:
+corrige o passo que falhou e volta a gerar. Quando a extração não é fiável, o
+resultado certo é recusar e deixar a ligação ao PDF oficial.
 
 Não uses WebFetch (nem ferramentas que resumem páginas) para obter o texto de uma
 lei: devolvem uma versão processada por um modelo, não o texto. Descarrega o ficheiro
@@ -31,7 +33,17 @@ python3 -m venv ~/.venvs/legislacao && ~/.venvs/legislacao/bin/pip install pymup
 
 Nos exemplos abaixo, `PY` é o Python que funciona e `S` a pasta `scripts/` desta skill.
 
-## Fluxo
+| Programa | Para quê |
+|---|---|
+| `extrair.py` | texto de PDF/HTML/TXT, sem o reescrever |
+| `estruturar.py` | Markdown por artigos, inteiro ou excerto |
+| `verificar.py` | confere palavras e pontuação, artigo a artigo |
+| `historico.py` | último ato que alterou cada artigo/anexo (que PDF abrir) |
+| `tabelas.py` | extrai um quadro de um PDF: grelha, linear ou recusada |
+| `quadros.py` | insere quadros nos ficheiros, conta-os, junta partes |
+| `dre_descarregar.js` + `dre_desempacotar.py` | obter PDF do DRE pelo browser quando o `curl` é recusado |
+
+## A. Texto do diploma
 
 ### 1. Fixar o pedido
 
@@ -63,7 +75,7 @@ $PY $S/extrair.py fonte.pdf -o trabalho/diploma.txt
 Aceita `.pdf`, `.html` e `.txt`. Lê a saída e o relatório `*.extracao.json`:
 
 - **ALERTA de páginas sem texto** → o PDF é digitalizado. Para aqui: procura outra
-  fonte digital. Não transcrevas a partir da imagem.
+  fonte digital. Não transcrevas a partir da imagem nem faças OCR.
 - **CONFERIR junções de hífen** → casos como «aplica-|se» vs «análi-|se». Decide cada
   um. Se algum estiver errado, corrige no `.txt` com uma substituição pontual (ex.:
   `sed -i '' 's/análi-se/análise/' trabalho/diploma.txt` no Mac) e diz ao utilizador
@@ -105,21 +117,66 @@ artigos sem epígrafe (normal em diplomas antigos; estranho se forem muitos).
 $PY $S/verificar.py trabalho/diploma.txt destino/FICHEIRO.md --marcar
 ```
 
-Compara artigo a artigo, palavra a palavra, o Markdown com o texto extraído e grava o
-resultado nos metadados (`verificacao`). Só entregas um ficheiro com `RESULTADO: OK`.
-Se houver diferenças, o problema está na estruturação (ex.: um «fecho» detetado no
-sítio errado): percebe a causa, corrige a origem ou as opções e gera de novo.
+Compara artigo a artigo o Markdown com o texto extraído: primeiro as palavras, depois
+a pontuação do corpo de cada artigo. Grava o resultado nos metadados (`verificacao`).
+Só entregas um ficheiro com `RESULTADO: OK`. Se houver diferenças, o problema está na
+estruturação (ex.: um «fecho» detetado no sítio errado): percebe a causa, corrige a
+origem ou as opções e gera de novo.
 
-A verificação não apanha mudanças de pontuação nem erros que já venham da fonte ou da
-extração. Por isso, no fim, mostra ao utilizador 2 ou 3 artigos lado a lado com a
-fonte (escolhe os mais longos ou com mais alíneas) para uma conferência rápida.
+A verificação não apanha erros que já venham da fonte ou da extração. Por isso, no
+fim, mostra ao utilizador 2 ou 3 artigos lado a lado com a fonte (os mais longos ou
+com mais alíneas) para uma conferência rápida.
 
 ### 7. Rever a estrutura e entregar
 
 Corre `grep -n "^##" FICHEIRO.md` e confirma que a árvore (livros, títulos, capítulos,
 secções, artigos) faz sentido. Depois entrega um resumo curto: ficheiro(s) criado(s),
 fonte, versão/data, n.º de artigos, resultado da verificação, decisões tomadas
-(junções de hífen, metadados por confirmar).
+(junções de hífen, metadados por confirmar) e, se houver, quantos «(ver documento
+original)» ficaram por resolver (`quadros.py contar`).
+
+## B. Quadros e tabelas — «(ver documento original)»
+
+O texto consolidado do DRE substitui quadros, tabelas, figuras e modelos por «(ver
+documento original)». O conteúdo só existe no PDF publicado. **Lê
+`references/tabelas.md` antes de extrair o primeiro quadro de uma sessão**: explica
+os três modos, as decisões que são tuas e os erros que já apareceram na prática.
+
+O circuito, por cada quadro:
+
+1. **Que PDF?** A ligação do DRE aponta sempre para a publicação original, mesmo
+   quando o artigo foi alterado depois.
+   `$PY $S/historico.py consolidado.txt` diz, por artigo/anexo, o último ato que o
+   alterou. Sem histórico → PDF original. Com histórico → PDF desse ato, **se o
+   trouxer** (num ato de alteração, um quadro que não muda aparece como uma linha de
+   pontos; o `tabelas.py` responde `INALTERADO` e recuas para o ato anterior).
+2. **Obter o PDF**: `curl -L -o pdfs/NOME.pdf URL`. Se der 403, usa o browser
+   (`dre_descarregar.js`, ver `references/tabelas.md`). Nunca WebFetch.
+3. **Extrair**:
+   ```bash
+   $PY $S/tabelas.py pdfs/NOME.pdf --pagina N --listar
+   $PY $S/tabelas.py pdfs/NOME.pdf --pagina N --legenda "QUADRO XX" -o quadros/ \
+       --url "URL oficial do PDF" --versao "Portaria n.º 135/2020"
+   ```
+   Gera `.md` (o quadro), `.json` (relatório) e `.png` (imagem recortada da página).
+4. **Mostrar sempre a imagem e a tabela juntas ao utilizador** antes de inserir. Lê
+   tu primeiro o `.png` e compara: colunas, linhas, células repetidas. Os ALERTAS
+   dizem onde olhar.
+5. **Símbolos `CONFERIR`**: o programa nunca substitui. Vê o símbolo na imagem,
+   propõe ao utilizador e, com a decisão dele, repete com `--trocar "«=≤"` (ou
+   `--simbolos-conferidos` se estiverem certos).
+6. **Inserir** só com `RESULTADO: OK`:
+   ```bash
+   $PY $S/quadros.py inserir BLOCO.md quadros/NOME_pN_qK.md --legenda "QUADRO XX"
+   ```
+   Modo `linear` só entra com aprovação expressa do utilizador (`--aprovado`).
+   `recusada` não entra: fica a ligação ao PDF que já lá está.
+7. **Fechar**: `verificar.py` de novo sobre o ficheiro (ignora os quadros e confirma
+   que o texto não foi tocado) e `quadros.py contar` para registar na ficha do
+   diploma quantos quadros foram reproduzidos e quantos ficaram só com ligação.
+
+PDF sem camada de texto (digitalizado): o `tabelas.py` recusa e para. Não se faz OCR
+de legislação.
 
 ## Quando a única fonte é o Alpaca
 
